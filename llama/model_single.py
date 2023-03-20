@@ -96,9 +96,9 @@ class Attention(nn.Module):
         self.cache_v = torch.zeros(
             (args.max_batch_size, args.max_seq_len, self.n_local_heads, self.head_dim)
         )
-        if hiq.get_env_bool("KV_CAHCHE_IN_GPU", True):
-            self.cache_k = self.cache_k.cuda()
-            self.cache_v = self.cache_v.cuda()
+        # if hiq.get_env_bool("KV_CAHCHE_IN_GPU", True):
+        #     self.cache_k = self.cache_k.cuda()
+        #     self.cache_v = self.cache_v.cuda()
 
     def forward(
         self,
@@ -128,7 +128,9 @@ class Attention(nn.Module):
         xq = xq.transpose(1, 2)
         keys = keys.transpose(1, 2)
         values = values.transpose(1, 2)
+
         scores = torch.matmul(xq, keys.transpose(2, 3)) / math.sqrt(self.head_dim)
+
         if mask is not None:
             scores = scores + mask  # (bs, n_local_heads, slen, cache_len + slen)
         scores = F.softmax(scores.float(), dim=-1).type_as(xq)
@@ -154,6 +156,7 @@ class FeedForward(nn.Module):
         self.w3 = nn.Linear(dim, hidden_dim, bias=False)
 
     def forward(self, x):
+
         return self.w2(F.silu(self.w1(x)) * self.w3(x))
 
 
@@ -178,9 +181,11 @@ class TransformerBlock(nn.Module):
         freqs_cis: torch.Tensor,
         mask: Optional[torch.Tensor],
     ):
-        h = x + self.attention.forward(
+
+        att = self.attention.forward(
             self.attention_norm(x), start_pos, freqs_cis, mask
         )
+        h = x + att
         out = h + self.feed_forward.forward(self.ffn_norm(h))
         return out
 
@@ -219,8 +224,9 @@ class Transformer(nn.Module):
             )
             mask = torch.triu(mask, diagonal=start_pos + 1).type_as(h)
 
+
         for layer in self.layers:
             h = layer(h, start_pos, freqs_cis, mask)
         h = self.norm(h)
-        output = self.output(h[:, -1, :])  # only compute last logits
+        output = self.output(h[:, :, :])  # only compute last logits
         return output.float()
