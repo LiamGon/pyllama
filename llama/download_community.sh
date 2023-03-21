@@ -27,13 +27,13 @@ wget --progress=bar:force ${PRESIGNED_URL/'*'/"tokenizer_checklist.chk"} -O ${TA
 echo ✅ ${TARGET_FOLDER}"/tokenizer_checklist.chk"
 
 (cd ${TARGET_FOLDER} && md5sum -c tokenizer_checklist.chk)
-
 for i in ${MODEL_SIZE//,/ }
 do
     echo "Downloading ${i}"
     mkdir -p ${TARGET_FOLDER}"/${i}"
-    for s in $(seq -f "0%g" 0 ${N_SHARD_DICT[$i]})
+    for s in $(seq -f "0%g" 0 0)
     do
+        echo $s
         #echo running: wget --continue --progress=bar:force ${PRESIGNED_URL/'*'/"${i}/consolidated.${s}.pth"} -O ${TARGET_FOLDER}"/${i}/consolidated.${s}.pth"
         echo "downloading file to" ${TARGET_FOLDER}"/${i}/consolidated.${s}.pth" ...please wait for a few minutes ...
         wget --continue --progress=bar:force ${PRESIGNED_URL/'*'/"${i}/consolidated.${s}.pth"} -O ${TARGET_FOLDER}"/${i}/consolidated.${s}.pth"
@@ -46,5 +46,4 @@ do
     echo "Checking checksums"
     (cd ${TARGET_FOLDER}"/${i}" && md5sum -c checklist.chk)
 done
-
 
