@@ -230,4 +230,4 @@ class Transformer(nn.Module):
             embeddings.append(h)
         h = self.norm(h)
         output = self.output(h[:, :, :])  # only compute last logits
-        return output.float(),embeddings
+        return output.float()
